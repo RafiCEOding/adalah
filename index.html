@@ -67,6 +67,21 @@ body{
   80%{ opacity:1; transform:scale(1); }
   100%{ opacity:0; transform:scale(1.08); }
 }
+.big.rainbow{
+  background:linear-gradient(90deg,#ff7aa8,#ffd56b,#7ad7ff,#b48aff,#ff7aa8);
+  background-size:200% 100%; -webkit-background-clip:text; background-clip:text;
+  color:transparent; -webkit-text-fill-color:transparent;
+  animation:popText var(--dur,1s) ease forwards, shine 2s linear infinite;
+  text-shadow:none;
+}
+.big.gold{
+  background:linear-gradient(90deg,#b8860b,#ffd700,#fff4b0,#ffd700,#b8860b);
+  background-size:200% 100%; -webkit-background-clip:text; background-clip:text;
+  color:transparent; -webkit-text-fill-color:transparent;
+  animation:popText var(--dur,1s) ease forwards, shine 2.5s linear infinite;
+  text-shadow:none;
+  filter:drop-shadow(0 0 12px rgba(255,200,0,.65));
+}
 
 /* ---------- Scene 2: Ucapan ---------- */
 .bearwrap{ width:min(62vw,280px,38vh); animation:bob 3.2s ease-in-out infinite; }
@@ -79,6 +94,14 @@ body{
   color:transparent; -webkit-text-fill-color:transparent;
   animation:shine 4s linear infinite;
 }
+
+.age{
+  font-family:'Dancing Script',cursive; font-weight:700;
+  font-size:clamp(1.8rem,9vw,3rem); line-height:1.1; margin-bottom:4px;
+  background-size:200% 100%; -webkit-background-clip:text; background-clip:text;
+  animation:shine 3s linear infinite;
+}
+
 @keyframes shine{ to{ background-position:200% 0; } }
 .pulse-heart{ font-size:1.6rem; animation:beat 1.1s ease-in-out infinite; }
 .balloon-sway{ transform-origin:150px 150px; animation:sway 3.6s ease-in-out infinite; }
@@ -167,6 +190,7 @@ body{
 
 <div id="stars" aria-hidden="true"></div>
 <button id="mute" aria-label="Matikan atau nyalakan musik">🔊</button>
+<audio id="bgm" src="lagu.mp3" loop preload="auto"></audio>
 
 <!-- Layar pembuka -->
 <section class="scene active" id="s0">
@@ -214,6 +238,10 @@ body{
     </svg>
   </div>
   <div class="hb">Happy Birthday</div>
+  <div class="age">
+    <span style="color:#ff7aa8">1</span><span style="color:#ffd56b">9</span>
+    <span style="color:#7ad7ff">T</span><span style="color:#b48aff">a</span><span style="color:#ff7aa8">h</span><span style="color:#ffd56b">u</span><span style="color:#7ad7ff">n</span> 🎂
+  </div>
   <div class="pulse-heart">❤️</div>
 </section>
 
@@ -256,8 +284,8 @@ body{
      ===================================================== */
   // Nama penerima. Bisa juga lewat link: ...?nama=Anita
   var params = new URLSearchParams(location.search);
-  var NAME = (params.get('nama') || 'Silvia').slice(0, 24);
-
+  var NAME = (params.get('nama') || 'Silvia Rahmadhani').slice(0, 24);
+  var NAME_PANGGILAN = 'Silvia'
   var CONFIG = {
     // Daftar foto (harus genap). Isi dengan alamat gambar atau data URI.
     // Selama masih kosong, website memakai foto contoh otomatis.
@@ -265,16 +293,16 @@ body{
     // Satu ucapan untuk tiap pasang foto
 
     messages: [
-      'Selamat ulang tahun, ' + NAME + ' 🤍',
-      'Sudah .',
-      'Terima kasih sudah hadir di hidupku.',
-      'Kamu alasan hari-hariku terasa lebih hangat.',
-      'Semoga semua doa baikmu dijawab semua.',
-      'Tetap jadi dirimu yang apa adanya. Aku suka.',
-      'Aku di sini, selalu. Yuk bikin lebih banyak cerita.'
+      'Selamat ulang tahun, ' + NAME_PANGGILAN + ' 🤍',
+      'Semoga di tahun ini banyak hal baik yang mengikutimu dan tetap terus positif thinking yaa',
+      'Jaga terus kesehatanmu di umur yang semakin tuwa ini ya:v.',
+      'oke sekarang doa untukmu, semoga hari-harimu penuh dengan hal baik.',
+      'Dan semoga semua doa baikmu dan harapanmu di ijabah oleh Allah SWT.',
+      'Ingat ya untuk tetap jadi dirimu seperti apa yang kamu mau. tapi nek dikandani ojo ngeyel:v',
+      'Dan aku selalu disini. Yuk bikin lebih banyak cerita.'
     ],
     lastPhotos: ['foto1.jpeg', 'foto2.jpeg'],
-    closing: 'Selamat ulang tahun, ' + NAME + '. Semoga tahun ini penuh tawa dan hal-hal baik. Aku sayang kamu. 💖'
+    closing: 'Selamat ulang tahun, ' + NAME + '. Semoga tahun ini penuh tawa dan hal-hal baik. Tertanda R.'
   };
 
   /* ---------- Foto contoh (dipakai bila photos kosong) ---------- */
@@ -357,17 +385,14 @@ body{
     }
   }
   function startMusic(){
-    try{
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      ac = new AC(); master = ac.createGain(); master.gain.value = 0.55; master.connect(ac.destination);
-      if (ac.state === 'suspended') ac.resume();
-      nextT = ac.currentTime + 0.1; timer = setInterval(schedule, 150);
-    }catch(e){}
+    var a = $('#bgm');
+    a.volume = 0.6;
+    a.play().catch(function(){});
   }
+
   $('#mute').addEventListener('click', function(){
     muted = !muted;
-    if (master) master.gain.value = muted ? 0 : 0.55;
+    $('#bgm').muted = muted;
     this.textContent = muted ? '🔇' : '🔊';
   });
 
@@ -403,12 +428,15 @@ body{
   async function playIntro(token){
     show('s1'); sizeMatrix(); matrixOn = true; requestAnimationFrame(drawMatrix);
     var t = $('#bigtext');
-    var seq = [['3',900],['2',900],['1',900],['HAPPY BIRTHDAY',2000],[NAME.toUpperCase(),2400]];
+    var seq = [['3',900],['2',900],['1',900],['HAPPY BIRTHDAY',2000],['19 TAHUN',1800,'gold'],[NAME.toUpperCase(),2400]];
     for (var i = 0; i < seq.length; i++){
       if (token !== runToken) return false;
       t.textContent = seq[i][0];
       t.style.setProperty('--dur', seq[i][1] + 'ms');
-      t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
+      t.classList.remove('pop','rainbow','gold');   // copot SEMUA dulu
+      void t.offsetWidth;                           // paksa refresh saat tidak ada animasi
+      if (seq[i][2]) t.classList.add(seq[i][2]);    // lalu pasang warna
+      t.classList.add('pop');                       // dan animasi bersama-sama
       await sleep(seq[i][1]);
     }
     matrixOn = false;
